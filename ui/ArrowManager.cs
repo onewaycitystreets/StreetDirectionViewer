@@ -46,6 +46,9 @@ namespace StreetDirectionViewer {
 
       NetManager netManager = Singleton<NetManager>.instance;
 
+      SimulationManager simManager = Singleton<SimulationManager>.instance;
+      bool leftHandDrive = simManager.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True;
+
       IEnumerable<NetSegment> segments;
       try {
         segments = ArrayUtils.Array16Enumerable(netManager.m_segments);
@@ -70,8 +73,13 @@ namespace StreetDirectionViewer {
           Vector3 direction = endPosition - startPosition;
 
           bool inverted = ((segment.m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None);
-          if (inverted)
+          if (inverted) {
             direction = -direction;
+          }
+
+          if (leftHandDrive) {
+            direction = -direction;
+          }
 
           if (SHOW_ALL_LANES) {
             for (uint i = segment.m_lanes, j = 0; i != 0; i = netManager.m_lanes.m_buffer[i].m_nextLane, j++) {
