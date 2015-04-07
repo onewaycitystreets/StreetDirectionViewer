@@ -160,7 +160,7 @@ namespace StreetDirectionViewer {
 
     private static Vector3 GetMiddlePosition(NetManager netManager, NetSegment segment) {
 
-      if (segment.Info.m_lanes.Length > ROAD_CENTER_MAP.Length) {
+      if (segment.Info.m_lanes.Length > ROAD_CENTER_MAP.Length - 1) {
         throw new ArgumentException("Road has too many lanes: " + segment.Info.m_lanes.Length);
       }
 
