@@ -132,7 +132,8 @@ namespace StreetDirectionViewer {
           }
         }
         if (otherSegmentId == ushort.MaxValue) {
-          CitiesConsole.Error("Node for segment doesn't contain the segment");
+          // TODO: There was a logging statement here to log an error,
+          // but users may have been seeing this too much.
           return false;
         }
         NetSegment otherSegment = netManager.m_segments.m_buffer[otherSegmentId];
