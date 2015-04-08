@@ -5,9 +5,14 @@ using System.Reflection;
 using System.Text;
 
 namespace StreetDirectionViewer {
-  class ArrayUtils {
 
-    public static IEnumerable<T> Array16Enumerable<T>(Array16<T> array) {
+  public struct Array16Item<T> {
+    public T item;
+    public ushort index;
+  }
+
+  public class ArrayUtils {
+    public static IEnumerable<Array16Item<T>> Array16Enumerable<T>(Array16<T> array) {
 
       // Surely there is a better way to iterate over all the segments?
 
@@ -24,7 +29,7 @@ namespace StreetDirectionViewer {
 
       for (uint i = 0; i < array.m_size; i++) {
         if (!unused.Contains(i)) {
-          yield return array.m_buffer[i];
+          yield return new Array16Item<T> { item = array.m_buffer[i], index = (ushort)i };
         }
       }
     }

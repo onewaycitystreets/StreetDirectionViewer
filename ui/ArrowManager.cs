@@ -1,4 +1,5 @@
 ﻿using ColossalFramework;
+using ColossalFramework.Math;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,6 +13,7 @@ namespace StreetDirectionViewer {
 
     private const String ARROW_OBJECT_NAME = "OneWayStreetArrow";
     private readonly Material ARROW_MATERIAL = Materials.GREEN_MATERIAL;
+    private readonly Material SUSPICIOUS_STREET_MATERIAL = Materials.MAGENTA_MATERIAL;
     private readonly Vector3 ARROW_OFFSET = new Vector3(0, 6, 0);
 
     private readonly List<GameObject> arrowGameObjects = new List<GameObject>();
@@ -49,7 +51,7 @@ namespace StreetDirectionViewer {
       SimulationManager simManager = Singleton<SimulationManager>.instance;
       bool leftHandDrive = simManager.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True;
 
-      IEnumerable<NetSegment> segments;
+      IEnumerable<Array16Item<NetSegment>> segments;
       try {
         segments = ArrayUtils.Array16Enumerable(netManager.m_segments);
       } catch (Exception e) {
@@ -57,13 +59,17 @@ namespace StreetDirectionViewer {
         return;
       }
 
-      foreach (NetSegment segment in segments) {
+      Bezier3 bezier3 = new Bezier3();
+
+      foreach (var item in segments) {
+        NetSegment segment = item.item;
+        ushort segmentId = item.index;
+
         if ((segment.m_flags & NetSegment.Flags.Deleted) != NetSegment.Flags.None) {
           continue;
         }
 
-        bool oneway = segment.Info.m_hasBackwardVehicleLanes ^ segment.Info.m_hasForwardVehicleLanes;
-        if (oneway) {
+        if (IsOneWay(segment)) {
           NetNode startNode = netManager.m_nodes.m_buffer[segment.m_startNode];
           NetNode endNode = netManager.m_nodes.m_buffer[segment.m_endNode];
 
@@ -87,22 +93,58 @@ namespace StreetDirectionViewer {
               createArrow(arrowPosition + new Vector3(0, j * 2), direction, Materials.materials[j]);
             }
           } else {
-            Vector3 arrowPosition;
-            try {
-              arrowPosition = GetMiddlePosition(netManager, segment);
-            } catch (ArgumentException e) {
-              CitiesConsole.Error("Could not determine middle lane: " + e);
-              // Fallback to the midpoint between the start and end nodes.
-              // This won't look right for certain curved roads, but
-              // better than nothing.
-              arrowPosition = (endPosition - startPosition) / 2;
-            }
 
-            createArrow(arrowPosition, direction, ARROW_MATERIAL);
+            bezier3.a = startPosition;
+            bezier3.d = endPosition;
+            bool smoothStart = (startNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
+            bool smoothEnd = (endNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
+            NetSegment.CalculateMiddlePoints(bezier3.a, segment.m_startDirection, bezier3.d, segment.m_endDirection, smoothStart, smoothEnd, out bezier3.b, out bezier3.c);
+            Vector3 arrowPosition = bezier3.Position(0.5f);
+
+            bool suspicious = IsSuspicious(segmentId, startNode, endNode, netManager);
+            Material arrowMaterial = suspicious ? SUSPICIOUS_STREET_MATERIAL : ARROW_MATERIAL;
+
+            createArrow(arrowPosition, direction, arrowMaterial);
           }
         }
-
       }
+    }
+
+    /// <summary>
+    /// Performs a heuristic on the segment to determine if it is "suspicious".
+    /// A segment is suspicious if it is one way, but one of its ends is a
+    /// two-way segment.
+    /// </summary>
+    private static bool IsSuspicious(ushort segmentId, NetNode startNode, NetNode endNode, NetManager netManager) {
+      return IsSuspicious(segmentId, startNode, netManager) || IsSuspicious(segmentId, endNode, netManager);
+    }
+
+    private static bool IsSuspicious(ushort segmentId, NetNode node, NetManager netManager) {
+      // A node with 2 segments just connects two roads. A node with more than 2 segments
+      // is an intersection, so that's not suspicious.
+      if (node.CountSegments() == 2) {
+        ushort otherSegmentId = ushort.MaxValue;
+        for (int i = 0; i < 8; i++) {
+          ushort id = node.GetSegment(i);
+          if (id != 0 && id != segmentId) {
+            otherSegmentId = id;
+            break;
+          }
+        }
+        if (otherSegmentId == ushort.MaxValue) {
+          CitiesConsole.Error("Node for segment doesn't contain the segment");
+          return false;
+        }
+        NetSegment otherSegment = netManager.m_segments.m_buffer[otherSegmentId];
+        if (!IsOneWay(otherSegment)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static bool IsOneWay(NetSegment segment) {
+      return segment.Info.m_hasBackwardVehicleLanes ^ segment.Info.m_hasForwardVehicleLanes;
     }
 
     public void Update() {
@@ -121,82 +163,6 @@ namespace StreetDirectionViewer {
       Arrow.Create(ARROW_OBJECT_NAME, position + ARROW_OFFSET, direction, material, out head, out shaft);
       arrowGameObjects.Add(head);
       arrowGameObjects.Add(shaft);
-    }
-
-    private class RoadCenter {
-      public readonly int left, right, center;
-
-      public RoadCenter(int left, int right) {
-        this.left = left;
-        this.right = right;
-        this.center = -1;
-      }
-
-      public RoadCenter(int center) {
-        this.center = center;
-        this.left = -1;
-        this.right = -1;
-      }
-    }
-
-    // This maps the number of lanes (of all types) a road has to the
-    // index in its linked list of lanes for its center lane.
-    // This was determined empirically by drawing colored arrows
-    // over every lane and matching the colors to the index, so
-    // hopefully this remains stable.
-    private static readonly RoadCenter[] ROAD_CENTER_MAP = {
-      /*  0 */ null,
-      /*  1 */ null,
-      /*  2 */ null,
-      /*  3 */ new RoadCenter(0),
-      /*  4 */ new RoadCenter(2, 3),
-      /*  5 */ new RoadCenter(1),
-      /*  6 */ new RoadCenter(4, 5),
-      /*  7 */ null,
-      /*  8 */ new RoadCenter(2, 3),
-      /*  9 */ null,
-      /* 10 */ new RoadCenter(8, 9),
-    };
-
-    private static Vector3 GetMiddlePosition(NetManager netManager, NetSegment segment) {
-
-      if (segment.Info.m_lanes.Length > ROAD_CENTER_MAP.Length - 1) {
-        throw new ArgumentException("Road has too many lanes: " + segment.Info.m_lanes.Length);
-      }
-
-      RoadCenter roadCenter = ROAD_CENTER_MAP[segment.Info.m_lanes.Length];
-      if (roadCenter == null) {
-        throw new ArgumentException("Road has an unexpected number of lanes: " + segment.Info.m_lanes.Length);
-      }
-
-      if (segment.Info.m_lanes.Length == 6) {
-        // Bizarrely, 3 lane highways and two-lane one-way roads both have 6 lanes.
-        // The 3 lane highways have 2 lanes in the middle lane.
-        // The easiest way to differentiate these seems to be to check the first lane:
-        // For two-lane one-way roads, the first lane is a sidewalk.
-        if ((segment.Info.m_lanes[0].m_laneType & NetInfo.LaneType.Pedestrian) != NetInfo.LaneType.None) {
-          roadCenter = ROAD_CENTER_MAP[6];
-        } else {
-          roadCenter = ROAD_CENTER_MAP[5];
-        }
-      }
-
-      if (roadCenter.center == -1) {
-        Vector3 left = getNthLane(netManager, segment, roadCenter.left).CalculatePosition(0.5f);
-        Vector3 right = getNthLane(netManager, segment, roadCenter.right).CalculatePosition(0.5f);
-        return (left + right) / 2;
-      } else {
-        return getNthLane(netManager, segment, roadCenter.center).CalculatePosition(0.5f);
-      }
-    }
-
-    private static NetLane getNthLane(NetManager netManager, NetSegment segment, int n) {
-
-      uint segmentNum = segment.m_lanes;
-      for (int i = 0; i < n; i++) {
-        segmentNum = netManager.m_lanes.m_buffer[segmentNum].m_nextLane;
-      }
-      return netManager.m_lanes.m_buffer[segmentNum];
     }
   }
 }

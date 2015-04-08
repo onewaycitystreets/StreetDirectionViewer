@@ -50,7 +50,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
@@ -62,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="geometry\Arrow.cs" />
+    <Compile Include="geometry\GameObjectUtils.cs" />
     <Compile Include="utils\ArrayUtils.cs" />
     <Compile Include="ui\ArrowManager.cs" />
     <Compile Include="utils\CitiesConsole.cs" />
