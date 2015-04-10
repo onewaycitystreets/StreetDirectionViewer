@@ -5,18 +5,27 @@ using UnityEngine;
 namespace StreetDirectionViewer {
   class Arrow {
 
-    private const float headLength = 12;
-    private const float headBottomRadius = headLength / 2;
-    private const float shaftRadius = 2f;
-    private const float shaftLength = 20;
+    private readonly float shaftLength;
+    private readonly Mesh headMesh, shaftMesh;
 
-    private static readonly Mesh HEAD_MESH = ConeMesh.Create(0, headBottomRadius, headLength);
-    private static readonly Mesh SHAFT_MESH = ConeMesh.Create(shaftRadius, shaftRadius, shaftLength);
+    public Arrow(Options options) {
+      this.shaftLength = options.arrowDimensions.shaftLength;
 
-    public static void Create(String name, Vector3 position, Vector3 direction, Material material, out GameObject headGameObject, out GameObject shaftGameObject) {
+      this.headMesh = ConeMesh.Create(
+          0,
+          options.arrowDimensions.headRadius,
+          options.arrowDimensions.headLength);
+
+      this.shaftMesh = ConeMesh.Create(
+          options.arrowDimensions.shaftRadius,
+          options.arrowDimensions.shaftRadius,
+          options.arrowDimensions.shaftLength);
+    }
+
+    public void Create(String name, Vector3 position, Vector3 direction, Material material, out GameObject headGameObject, out GameObject shaftGameObject) {
       Quaternion rotation = Quaternion.FromToRotation(Vector3.up, direction);
-      headGameObject = GameObjectUtils.Create(name, HEAD_MESH, position, rotation, material);
-      shaftGameObject = GameObjectUtils.Create(name, SHAFT_MESH, position - direction.normalized * shaftLength, rotation, material);
+      headGameObject = GameObjectUtils.Create(name, headMesh, position, rotation, material);
+      shaftGameObject = GameObjectUtils.Create(name, shaftMesh, position - direction.normalized * shaftLength, rotation, material);
     }
   }
 }

@@ -8,13 +8,7 @@ using UnityEngine;
 namespace StreetDirectionViewer {
   class ArrowManager {
 
-    // For debugging.
-    private const bool SHOW_ALL_LANES = false;
-
     private const String ARROW_OBJECT_NAME = "OneWayStreetArrow";
-    private readonly Material ARROW_MATERIAL = Materials.GREEN_MATERIAL;
-    private readonly Material SUSPICIOUS_STREET_MATERIAL = Materials.MAGENTA_MATERIAL;
-    private readonly Vector3 ARROW_OFFSET = new Vector3(0, 6, 0);
 
     private readonly List<GameObject> arrowGameObjects = new List<GameObject>();
 
@@ -59,13 +53,23 @@ namespace StreetDirectionViewer {
         return;
       }
 
+      Options options = Options.CurrentOptions;
+      Arrow arrow = new Arrow(options);
+      Material normalArrowMaterial = Materials.Create(options.arrowColor);
+      Material errorArrowMaterial = Materials.Create(options.errorArrowColor);
+      Vector3 arrowOffset = options.arrowOffset;
+
       Bezier3 bezier3 = new Bezier3();
 
       foreach (var item in segments) {
         NetSegment segment = item.item;
         ushort segmentId = item.index;
 
-        if ((segment.m_flags & NetSegment.Flags.Deleted) != NetSegment.Flags.None) {
+        if (segment.m_flags.IsFlagSet(NetSegment.Flags.Deleted)) {
+          continue;
+        }
+
+        if (IsAirstripOrHarbor(segment)) {
           continue;
         }
 
@@ -78,7 +82,7 @@ namespace StreetDirectionViewer {
 
           Vector3 direction = endPosition - startPosition;
 
-          bool inverted = ((segment.m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None);
+          bool inverted = segment.m_flags.IsFlagSet(NetSegment.Flags.Invert);
           if (inverted) {
             direction = -direction;
           }
@@ -87,25 +91,17 @@ namespace StreetDirectionViewer {
             direction = -direction;
           }
 
-          if (SHOW_ALL_LANES) {
-            for (uint i = segment.m_lanes, j = 0; i != 0; i = netManager.m_lanes.m_buffer[i].m_nextLane, j++) {
-              Vector3 arrowPosition = netManager.m_lanes.m_buffer[i].CalculatePosition(0.5f);
-              createArrow(arrowPosition + new Vector3(0, j * 2), direction, Materials.materials[j]);
-            }
-          } else {
+          bezier3.a = startPosition;
+          bezier3.d = endPosition;
+          bool smoothStart = (startNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
+          bool smoothEnd = (endNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
+          NetSegment.CalculateMiddlePoints(bezier3.a, segment.m_startDirection, bezier3.d, segment.m_endDirection, smoothStart, smoothEnd, out bezier3.b, out bezier3.c);
+          Vector3 arrowPosition = bezier3.Position(0.5f);
 
-            bezier3.a = startPosition;
-            bezier3.d = endPosition;
-            bool smoothStart = (startNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
-            bool smoothEnd = (endNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
-            NetSegment.CalculateMiddlePoints(bezier3.a, segment.m_startDirection, bezier3.d, segment.m_endDirection, smoothStart, smoothEnd, out bezier3.b, out bezier3.c);
-            Vector3 arrowPosition = bezier3.Position(0.5f);
+          bool suspicious = IsSuspicious(segmentId, startNode, endNode, netManager);
+          Material arrowMaterial = suspicious ? errorArrowMaterial : normalArrowMaterial;
 
-            bool suspicious = IsSuspicious(segmentId, startNode, endNode, netManager);
-            Material arrowMaterial = suspicious ? SUSPICIOUS_STREET_MATERIAL : ARROW_MATERIAL;
-
-            createArrow(arrowPosition, direction, arrowMaterial);
-          }
+          createArrow(arrow, arrowPosition + arrowOffset, direction, arrowMaterial);
         }
       }
     }
@@ -148,6 +144,15 @@ namespace StreetDirectionViewer {
       return segment.Info.m_hasBackwardVehicleLanes ^ segment.Info.m_hasForwardVehicleLanes;
     }
 
+    private static bool IsAirstripOrHarbor(NetSegment segment) {
+      foreach (NetInfo.Lane lane in segment.Info.m_lanes) {
+        if (lane.m_vehicleType.IsFlagSet(VehicleInfo.VehicleType.Plane | VehicleInfo.VehicleType.Ship)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     public void Update() {
       if (arrowGameObjects.Count > 0) {
         // TODO: If destroying all the arrows and re-creating them
@@ -159,9 +164,9 @@ namespace StreetDirectionViewer {
       }
     }
 
-    private void createArrow(Vector3 position, Vector3 direction, Material material) {
+    private void createArrow(Arrow arrow, Vector3 position, Vector3 direction, Material material) {
       GameObject head, shaft;
-      Arrow.Create(ARROW_OBJECT_NAME, position + ARROW_OFFSET, direction, material, out head, out shaft);
+      arrow.Create(ARROW_OBJECT_NAME, position, direction, material, out head, out shaft);
       arrowGameObjects.Add(head);
       arrowGameObjects.Add(shaft);
     }

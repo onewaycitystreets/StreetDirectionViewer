@@ -136,6 +136,7 @@ namespace StreetDirectionViewer {
       foregroundSpriteSet1.focused = "RoadArrowIcon";
 
       showStreetDirectionButton.eventActiveStateIndexChanged += showStreetDirectionButton_eventActiveStateIndexChanged;
+      showStreetDirectionButton.eventVisibilityChanged += showStreetDirectionButton_eventVisibilityChanged;
 
       return true;
     }
@@ -148,7 +149,17 @@ namespace StreetDirectionViewer {
       }
     }
 
-    UITextureAtlas CreateTextureAtlas(string textureFile, string atlasName, Material baseMaterial, int spriteWidth, int spriteHeight, string[] spriteNames) {
+    private void showStreetDirectionButton_eventVisibilityChanged(UIComponent component, bool visible) {
+      if (visible) {
+        if (((UIMultiStateButton) component).activeStateIndex == 1) {
+          arrowManager.CreateArrows();
+        }
+      } else {
+        arrowManager.DestroyArrows();
+      }
+    }
+
+    private static UITextureAtlas CreateTextureAtlas(string textureFile, string atlasName, Material baseMaterial, int spriteWidth, int spriteHeight, string[] spriteNames) {
 
       Texture2D texture = new Texture2D(spriteWidth * spriteNames.Length, spriteHeight, TextureFormat.ARGB32, false);
       texture.filterMode = FilterMode.Bilinear;

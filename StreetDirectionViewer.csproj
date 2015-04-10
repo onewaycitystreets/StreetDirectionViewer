@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="geometry\Arrow.cs" />
     <Compile Include="geometry\GameObjectUtils.cs" />
+    <Compile Include="Options.cs" />
     <Compile Include="utils\ArrayUtils.cs" />
     <Compile Include="ui\ArrowManager.cs" />
     <Compile Include="utils\CitiesConsole.cs" />
