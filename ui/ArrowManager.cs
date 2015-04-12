@@ -53,7 +53,7 @@ namespace StreetDirectionViewer {
         return;
       }
 
-      Options options = Options.CurrentOptions;
+      Options options = OptionsLoader.CurrentOptions;
       Arrow arrow = new Arrow(options);
       Material normalArrowMaterial = Materials.Create(options.arrowColor);
       Material errorArrowMaterial = Materials.Create(options.errorArrowColor);

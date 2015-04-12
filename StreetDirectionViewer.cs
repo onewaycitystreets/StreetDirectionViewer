@@ -30,14 +30,14 @@ namespace StreetDirectionViewer {
 
     public override void OnCreated(IThreading threading) {
       this.threading = threading;
-      Options.Load();
-      Options.eventOptionsChanged += () => {
+      OptionsLoader.Load();
+      OptionsLoader.eventOptionsChanged += () => {
         threading.QueueMainThread(new Action(() => { arrowManager.Update(); }));
       };
     }
 
     public override void OnReleased() {
-      Options.OnRelease();
+      OptionsLoader.OnRelease();
     }
 
     public ThreadingExtension() {

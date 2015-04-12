@@ -150,12 +150,14 @@ namespace StreetDirectionViewer {
     }
 
     private void showStreetDirectionButton_eventVisibilityChanged(UIComponent component, bool visible) {
-      if (visible) {
-        if (((UIMultiStateButton) component).activeStateIndex == 1) {
-          arrowManager.CreateArrows();
+      if (OptionsLoader.CurrentOptions.hideWithRoadsPanel) {
+        if (visible) {
+          if (((UIMultiStateButton) component).activeStateIndex == 1) {
+            arrowManager.CreateArrows();
+          }
+        } else {
+          arrowManager.DestroyArrows();
         }
-      } else {
-        arrowManager.DestroyArrows();
       }
     }
 

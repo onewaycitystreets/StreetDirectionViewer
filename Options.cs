@@ -7,20 +7,28 @@ using System.Xml.Serialization;
 using UnityEngine;
 
 namespace StreetDirectionViewer {
+
   public class Options {
 
-    public static readonly Options DEFAULT = new Options() {
-      arrowColor = Color.green,
-      errorArrowColor = Color.magenta,
-      arrowOffset = new Vector3(0, 6, 0),
-      arrowDimensions = new ArrowDimensions() {
-        headLength = 12,
-        headRadius = 6,
-        shaftRadius = 2,
-        shaftLength = 20
-      }
-    };
+    public class ArrowDimensions {
+      public float headLength = 12;
+      public float headRadius = 6;
+      public float shaftLength = 20;
+      public float shaftRadius = 2;
+    }
 
+    // This class really ought to be immutable,
+    // but Vector3 and Color look like they're
+    // mutable, so...
+
+    public Color arrowColor = Color.green;
+    public Color errorArrowColor = Color.magenta;
+    public Vector3 arrowOffset = new Vector3(0, 6, 0);
+    public ArrowDimensions arrowDimensions = new ArrowDimensions();
+    public bool hideWithRoadsPanel = true;
+  }
+
+  public static class OptionsLoader {
     public static Options CurrentOptions {
       get;
       private set;
@@ -40,11 +48,11 @@ namespace StreetDirectionViewer {
           CurrentOptions = (Options)xmlSerializer.Deserialize(streamReader);
         }
       } catch (FileNotFoundException) {
-        CurrentOptions = DEFAULT;
+        CurrentOptions = new Options();
         Save();
       } catch (Exception e) {
         CitiesConsole.Error(e);
-        CurrentOptions = DEFAULT;
+        CurrentOptions = new Options();
       }
 
       if (fileSystemWatcher == null) {
@@ -78,21 +86,6 @@ namespace StreetDirectionViewer {
         fileSystemWatcher = null;
       }
     }
-
-    public struct ArrowDimensions {
-      public float headRadius;
-      public float headLength;
-      public float shaftRadius;
-      public float shaftLength;
-    }
-
-    // This class really ought to be immutable,
-    // but Vector3 and Color look like they're
-    // mutable, so...
-
-    public Color arrowColor;
-    public Color errorArrowColor;
-    public Vector3 arrowOffset;
-    public ArrowDimensions arrowDimensions;
   }
+
 }
