@@ -32,7 +32,7 @@ namespace StreetDirectionViewer {
       this.threading = threading;
       OptionsLoader.Load();
       OptionsLoader.eventOptionsChanged += () => {
-        threading.QueueMainThread(new Action(() => { arrowManager.Update(); }));
+        threading.QueueMainThread(() => { arrowManager.Update(); });
       };
     }
 
@@ -67,7 +67,7 @@ namespace StreetDirectionViewer {
     public override void OnBeforeSimulationTick() {
       if (Singleton<NetManager>.instance.m_nodesUpdated || Singleton<NetManager>.instance.m_segmentsUpdated) {
         // Don't block the simulation thread.
-        threading.QueueMainThread(new Action(() => { arrowManager.Update(); }));
+        threading.QueueMainThread(() => { arrowManager.Update(); });
       }
     }
 

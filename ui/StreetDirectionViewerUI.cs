@@ -33,7 +33,7 @@ namespace StreetDirectionViewer {
         // so listen for the roads tab button in the main tool strip.
         UITabstrip mainToolStrip = UIUtils.Find<UITabstrip>("MainToolstrip");
         if (mainToolStrip == null) {
-          CitiesConsole.Log("Could not find MainToolstrip");
+          CitiesConsole.Warning("Could not find MainToolstrip");
           return;
         }
         mainToolStrip.eventSelectedIndexChanged += mainToolStrip_eventSelectedIndexChanged;
@@ -67,7 +67,7 @@ namespace StreetDirectionViewer {
       }
 
       if (roadsOptionPanel == null) {
-        CitiesConsole.Log("Could not find RoadsOptionPanel");
+        CitiesConsole.Warning("Could not find RoadsOptionPanel");
         return false;
       }
 
