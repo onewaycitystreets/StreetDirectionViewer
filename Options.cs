@@ -17,6 +17,18 @@ namespace StreetDirectionViewer {
       public float shaftRadius = 2;
     }
 
+    public class FlatArrowDimensions {
+      public float arrowHeight = 4;
+      public float headLength = 12;
+      public float headWidth = 12;
+      public float shaftLength = 20;
+      public float shaftWidth = 4;
+    }
+
+    public enum ArrowType {
+      Round, Flat
+    }
+
     // This class really ought to be immutable,
     // but Vector3 and Color look like they're
     // mutable, so...
@@ -24,7 +36,10 @@ namespace StreetDirectionViewer {
     public Color arrowColor = Color.green;
     public Color errorArrowColor = Color.magenta;
     public Vector3 arrowOffset = new Vector3(0, 6, 0);
+    public Vector3 flatArrowOffset = new Vector3(0, 2, 0);
+    public ArrowType arrowType = new ArrowType();
     public ArrowDimensions arrowDimensions = new ArrowDimensions();
+    public FlatArrowDimensions flatArrowDimensions = new FlatArrowDimensions();
     public bool hideWithRoadsPanel = true;
   }
 
@@ -64,8 +79,6 @@ namespace StreetDirectionViewer {
     }
 
     private static void fileSystemWatcher_Changed(object sender, FileSystemEventArgs e) {
-      CitiesConsole.Log("Reloading settings");
-      Load();
       eventOptionsChanged();
     }
 

@@ -54,10 +54,16 @@ namespace StreetDirectionViewer {
       }
 
       Options options = OptionsLoader.CurrentOptions;
-      Arrow arrow = new Arrow(options);
+
+      Arrow arrow = null;
+      if (options.arrowType == Options.ArrowType.Round) {
+        arrow = new RoundArrow(options);
+      } else if (options.arrowType == Options.ArrowType.Flat) {
+        arrow = new FlatArrow(options);
+      }
+
       Material normalArrowMaterial = Materials.Create(options.arrowColor);
       Material errorArrowMaterial = Materials.Create(options.errorArrowColor);
-      Vector3 arrowOffset = options.arrowOffset;
 
       Bezier3 bezier3 = new Bezier3();
 
@@ -101,7 +107,7 @@ namespace StreetDirectionViewer {
           bool suspicious = IsSuspicious(segmentId, startNode, endNode, netManager);
           Material arrowMaterial = suspicious ? errorArrowMaterial : normalArrowMaterial;
 
-          createArrow(arrow, arrowPosition + arrowOffset, direction, arrowMaterial);
+          createArrow(arrow, arrowPosition, direction, arrowMaterial);
         }
       }
     }

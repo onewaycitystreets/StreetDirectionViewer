@@ -32,7 +32,11 @@ namespace StreetDirectionViewer {
       this.threading = threading;
       OptionsLoader.Load();
       OptionsLoader.eventOptionsChanged += () => {
-        threading.QueueMainThread(() => { arrowManager.Update(); });
+        threading.QueueMainThread(() => {
+          CitiesConsole.Log("Reloading settings");
+          OptionsLoader.Load();
+          arrowManager.Update(); 
+        });
       };
     }
 

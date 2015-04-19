@@ -61,6 +61,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="geometry\Arrow.cs" />
+    <Compile Include="geometry\BoxMesh.cs" />
+    <Compile Include="geometry\TriangleMesh.cs" />
     <Compile Include="geometry\GameObjectUtils.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="utils\ArrayUtils.cs" />
