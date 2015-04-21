@@ -5,6 +5,7 @@ using System.Text;
 using UnityEngine;
 using ColossalFramework.UI;
 using System.Collections;
+using ICities;
 
 namespace StreetDirectionViewer {
   class StreetDirectionViewerUI {
@@ -12,9 +13,15 @@ namespace StreetDirectionViewer {
     private const String BUTTON_NAME = "StreetDirectionViewerButton";
 
     private readonly ArrowManager arrowManager;
+    public AppMode appMode { get; set; }
+    private UIMultiStateButton showStreetDirectionButton;
 
     public StreetDirectionViewerUI(ArrowManager arrowManager) {
       this.arrowManager = arrowManager;
+    }
+
+    public void OptionsChanged() {
+      SetButtonPositionAndSize();
     }
 
     public void CreateUI() {
@@ -72,24 +79,11 @@ namespace StreetDirectionViewer {
       }
 
       GameObject showStreetDirectionButtonGameObject = new GameObject(BUTTON_NAME);
-      UIMultiStateButton showStreetDirectionButton = showStreetDirectionButtonGameObject.AddComponent<UIMultiStateButton>();
+      showStreetDirectionButton = showStreetDirectionButtonGameObject.AddComponent<UIMultiStateButton>();
       roadsOptionPanel.AttachUIComponent(showStreetDirectionButtonGameObject);
 
-      // In editor mode, the Toggle Snapping button is all the way to the left on the screen,
-      // so putting the arrow toggle button to the left of the Toggle Snapping button
-      // will put the button off screen. So put the arrow toggle button to the right
-      // of the Toggle Snapping button in editor mode.
-      // The Toggle Zoning button from the Toggle Zoning mod is normally to the right
-      // of Toggle Snapping, but that mod isn't active in editor mode.
-      Vector3 buttonPosition;
-      if (roadsOptionPanel.absolutePosition.x > 2) {
-        buttonPosition = new Vector3(-38f, 0);
-      } else {
-        buttonPosition = new Vector3(38f, 0);
-      }
+      SetButtonPositionAndSize();
 
-      showStreetDirectionButton.size = new Vector2(36f, 36f);
-      showStreetDirectionButton.relativePosition = buttonPosition;
       showStreetDirectionButton.playAudioEvents = true;
       showStreetDirectionButton.name = BUTTON_NAME;
       showStreetDirectionButton.tooltip = "Show Directions of One-Way Roads";
@@ -152,6 +146,25 @@ namespace StreetDirectionViewer {
       showStreetDirectionButton.eventVisibilityChanged += showStreetDirectionButton_eventVisibilityChanged;
 
       return true;
+    }
+
+    private void SetButtonPositionAndSize() {
+      // In editor mode, the Toggle Snapping button is all the way to the left on the screen,
+      // so putting the arrow toggle button to the left of the Toggle Snapping button
+      // will put the button off screen. So put the arrow toggle button to the right
+      // of the Toggle Snapping button in editor mode.
+      // The Toggle Zoning button from the Toggle Zoning mod is normally to the right
+      // of Toggle Snapping, but that mod isn't active in editor mode.
+      Vector3 buttonPosition, buttonSize;
+      if (appMode == AppMode.Game) {
+        buttonPosition = OptionsLoader.CurrentOptions.arrowToggleButtonPositionInGame;
+        buttonSize = OptionsLoader.CurrentOptions.arrowToggleButtonSizeInGame;
+      } else {
+        buttonPosition = OptionsLoader.CurrentOptions.arrowToggleButtonPositionInEditor;
+        buttonSize = OptionsLoader.CurrentOptions.arrowToggleButtonSizeEditor;
+      }
+      showStreetDirectionButton.relativePosition = buttonPosition;
+      showStreetDirectionButton.size = buttonSize;
     }
 
     private void showStreetDirectionButton_eventActiveStateIndexChanged(UIComponent component, int value) {

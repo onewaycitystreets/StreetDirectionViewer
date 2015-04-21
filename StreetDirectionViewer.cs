@@ -28,6 +28,11 @@ namespace StreetDirectionViewer {
 
     private bool uiCreated = false;
 
+    public ThreadingExtension() {
+      arrowManager = new ArrowManager();
+      streetDirectionViewerUI = new StreetDirectionViewerUI(arrowManager);
+    }
+
     public override void OnCreated(IThreading threading) {
       this.threading = threading;
       OptionsLoader.Load();
@@ -35,18 +40,14 @@ namespace StreetDirectionViewer {
         threading.QueueMainThread(() => {
           CitiesConsole.Log("Reloading settings");
           OptionsLoader.Load();
-          arrowManager.Update(); 
+          arrowManager.Update();
+          streetDirectionViewerUI.OptionsChanged();
         });
       };
     }
 
     public override void OnReleased() {
       OptionsLoader.OnRelease();
-    }
-
-    public ThreadingExtension() {
-      arrowManager = new ArrowManager();
-      streetDirectionViewerUI = new StreetDirectionViewerUI(arrowManager);
     }
 
     public override void OnUpdate(float realTimeDelta, float simulationTimeDelta) {
@@ -60,6 +61,7 @@ namespace StreetDirectionViewer {
           if (deletedArrows) {
             arrowManager.CreateArrows();
           }
+          streetDirectionViewerUI.appMode = threading.managers.loading.currentMode;
           streetDirectionViewerUI.CreateUI();
         } catch (Exception e) {
           CitiesConsole.Error(e);
@@ -76,7 +78,9 @@ namespace StreetDirectionViewer {
     }
 
     public void OnCreated(ILoading loading) {
-
+      // This doesn't seem to be called. Maybe the plugin manager
+      // sees that it implements IThreadingExtension first and doesn't
+      // look for other interfaces?
     }
 
     public void OnLevelLoaded(LoadMode mode) {
