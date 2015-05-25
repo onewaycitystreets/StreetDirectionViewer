@@ -27,6 +27,7 @@ namespace StreetDirectionViewer {
     private readonly StreetDirectionViewerUI streetDirectionViewerUI;
 
     private bool uiCreated = false;
+    private InfoManager.InfoMode previousInfoMode;
 
     public ThreadingExtension() {
       arrowManager = new ArrowManager();
@@ -41,7 +42,7 @@ namespace StreetDirectionViewer {
           CitiesConsole.Log("Reloading settings");
           OptionsLoader.Load();
           arrowManager.Update();
-          streetDirectionViewerUI.OptionsChanged();
+          streetDirectionViewerUI.OptionsFileChanged();
         });
       };
     }
@@ -71,7 +72,19 @@ namespace StreetDirectionViewer {
     }
 
     public override void OnBeforeSimulationTick() {
-      if (Singleton<NetManager>.instance.m_nodesUpdated || Singleton<NetManager>.instance.m_segmentsUpdated) {
+      NetManager netManager = Singleton<NetManager>.instance;
+      bool roadsUpdated = netManager.m_nodesUpdated || netManager.m_segmentsUpdated;
+
+      InfoManager.InfoMode currentInfoMode = Singleton<InfoManager>.instance.CurrentMode;
+      // Update the arrows if the info mode has come out of or gone into traffic mode.
+      // When in traffic mode, tunnels are visible, so the underground arrows might
+      // need to be drawn or hidden.
+      bool trafficModeChanged = this.previousInfoMode != currentInfoMode &&
+          (previousInfoMode == InfoManager.InfoMode.Traffic ||
+           currentInfoMode == InfoManager.InfoMode.Traffic);
+      this.previousInfoMode = currentInfoMode;
+
+      if (roadsUpdated || trafficModeChanged) {
         // Don't block the simulation thread.
         threading.QueueMainThread(() => { arrowManager.Update(); });
       }

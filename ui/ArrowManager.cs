@@ -41,6 +41,9 @@ namespace StreetDirectionViewer {
     public void CreateArrows() {
 
       NetManager netManager = Singleton<NetManager>.instance;
+      
+      InfoManager infoManager = Singleton<InfoManager>.instance;
+      bool showUndergroundArrows = (infoManager.CurrentMode == InfoManager.InfoMode.Traffic);
 
       SimulationManager simManager = Singleton<SimulationManager>.instance;
       bool leftHandDrive = simManager.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True;
@@ -62,8 +65,10 @@ namespace StreetDirectionViewer {
         arrow = new FlatArrow(options);
       }
 
-      Material normalArrowMaterial = Materials.Create(options.arrowColor);
-      Material errorArrowMaterial = Materials.Create(options.errorArrowColor);
+      Material normalArrowMaterial = Materials.CreateDiffuse(options.arrowColor);
+      Material errorArrowMaterial = Materials.CreateDiffuse(options.errorArrowColor);
+      Material normalUndergroundArrowMaterial = Materials.CreateAlwaysOnTop(options.undergroundArrowColor);
+      Material errorUndergroundArrowMaterial = Materials.CreateAlwaysOnTop(options.undergroundErrorArrowColor);
 
       Bezier3 bezier3 = new Bezier3();
 
@@ -79,37 +84,55 @@ namespace StreetDirectionViewer {
           continue;
         }
 
-        if (IsOneWay(segment)) {
-          NetNode startNode = netManager.m_nodes.m_buffer[segment.m_startNode];
-          NetNode endNode = netManager.m_nodes.m_buffer[segment.m_endNode];
-
-          Vector3 startPosition = startNode.m_position;
-          Vector3 endPosition = endNode.m_position;
-
-          Vector3 direction = endPosition - startPosition;
-
-          bool inverted = segment.m_flags.IsFlagSet(NetSegment.Flags.Invert);
-          if (inverted) {
-            direction = -direction;
-          }
-
-          if (leftHandDrive) {
-            direction = -direction;
-          }
-
-          bezier3.a = startPosition;
-          bezier3.d = endPosition;
-          bool smoothStart = (startNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
-          bool smoothEnd = (endNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
-          NetSegment.CalculateMiddlePoints(bezier3.a, segment.m_startDirection, bezier3.d, segment.m_endDirection, smoothStart, smoothEnd, out bezier3.b, out bezier3.c);
-          Vector3 arrowPosition = bezier3.Position(0.5f);
-
-          bool suspicious = IsSuspicious(segmentId, startNode, endNode, netManager);
-          Material arrowMaterial = suspicious ? errorArrowMaterial : normalArrowMaterial;
-
-          createArrow(arrow, arrowPosition, direction, arrowMaterial);
+        if (!IsOneWay(segment)) {
+          continue;
         }
+
+        NetNode startNode = netManager.m_nodes.m_buffer[segment.m_startNode];
+        NetNode endNode = netManager.m_nodes.m_buffer[segment.m_endNode];
+
+        bool underground = IsUnderground(startNode, endNode);
+        if (!showUndergroundArrows && underground) {
+          continue;
+        }
+
+        Vector3 startPosition = startNode.m_position;
+        Vector3 endPosition = endNode.m_position;
+
+        Vector3 direction = endPosition - startPosition;
+
+        bool inverted = segment.m_flags.IsFlagSet(NetSegment.Flags.Invert);
+        if (inverted) {
+          direction = -direction;
+        }
+
+        if (leftHandDrive) {
+          direction = -direction;
+        }
+
+        bezier3.a = startPosition;
+        bezier3.d = endPosition;
+        bool smoothStart = (startNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
+        bool smoothEnd = (endNode.m_flags & NetNode.Flags.Middle) != NetNode.Flags.None;
+        NetSegment.CalculateMiddlePoints(bezier3.a, segment.m_startDirection, bezier3.d, segment.m_endDirection, smoothStart, smoothEnd, out bezier3.b, out bezier3.c);
+        Vector3 arrowPosition = bezier3.Position(0.5f);
+
+        bool suspicious = IsSuspicious(segmentId, startNode, endNode, netManager);
+
+        Material arrowMaterial;
+        if (underground) {
+          arrowMaterial = suspicious ? errorUndergroundArrowMaterial : normalUndergroundArrowMaterial;
+        } else {
+          arrowMaterial = suspicious ? errorArrowMaterial : normalArrowMaterial;
+        }
+
+        createArrow(arrow, arrowPosition, direction, arrowMaterial);
+        
       }
+    }
+
+    private static bool IsUnderground(NetNode startNode, NetNode endNode) {
+      return startNode.m_flags.IsFlagSet(NetNode.Flags.Underground) && endNode.m_flags.IsFlagSet(NetNode.Flags.Underground);
     }
 
     /// <summary>

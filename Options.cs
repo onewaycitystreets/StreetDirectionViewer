@@ -8,6 +8,10 @@ using UnityEngine;
 
 namespace StreetDirectionViewer {
 
+  public class Option : System.Attribute {
+    public String uiLabel;
+  }
+
   public class Options {
 
     public class ArrowDimensions {
@@ -18,7 +22,7 @@ namespace StreetDirectionViewer {
     }
 
     public class FlatArrowDimensions {
-      public float arrowHeight = 4;
+      public float arrowHeight = 2;
       public float headLength = 12;
       public float headWidth = 12;
       public float shaftLength = 20;
@@ -35,12 +39,22 @@ namespace StreetDirectionViewer {
 
     public Color arrowColor = Color.green;
     public Color errorArrowColor = Color.magenta;
+    public Color undergroundArrowColor = Color.green;
+    public Color undergroundErrorArrowColor = Color.magenta;
+
+    public ArrowType arrowType = ArrowType.Round;
+
+    [Option(uiLabel = "Round arrow offset")]
     public Vector3 arrowOffset = new Vector3(0, 6, 0);
-    public Vector3 flatArrowOffset = new Vector3(0, 2, 0);
-    public ArrowType arrowType = new ArrowType();
+    [Option(uiLabel = "Round arrow dimensions")]
     public ArrowDimensions arrowDimensions = new ArrowDimensions();
+
+    public Vector3 flatArrowOffset = new Vector3(0, 2, 0);
     public FlatArrowDimensions flatArrowDimensions = new FlatArrowDimensions();
+
+    [Option(uiLabel = "Hide arrow toggle button with roads panel")]
     public bool hideWithRoadsPanel = true;
+
     public Vector2 arrowToggleButtonPositionInGame = new Vector2(-38, 0);
     public Vector2 arrowToggleButtonPositionInEditor = new Vector2(38, 0);
     public Vector2 arrowToggleButtonSizeInGame = new Vector2(36, 36);
@@ -83,17 +97,26 @@ namespace StreetDirectionViewer {
     }
 
     private static void fileSystemWatcher_Changed(object sender, FileSystemEventArgs e) {
+      // Don't do a Load() here. Loading should happen on the main thread to avoid any
+      // concurrency issues.
       eventOptionsChanged();
     }
 
     public static void Save() {
+      if (fileSystemWatcher != null) {
+        fileSystemWatcher.EnableRaisingEvents = false;
+      }
       try {
         XmlSerializer xmlSerializer = new XmlSerializer(typeof(Options));
         using (StreamWriter streamWriter = new StreamWriter(FILE_NAME)) {
           xmlSerializer.Serialize(streamWriter, CurrentOptions);
+          streamWriter.Flush();
         }
       } catch (Exception e) {
         CitiesConsole.Error(e);
+      }
+      if (fileSystemWatcher != null) {
+        fileSystemWatcher.EnableRaisingEvents = true;
       }
     }
 

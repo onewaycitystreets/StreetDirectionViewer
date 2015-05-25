@@ -17,6 +17,10 @@ namespace StreetDirectionViewer {
       DebugOutputPanel.AddMessage(PluginManager.MessageType.Error, prefix + ObjectToString(s));
     }
 
+    public static void Error(String fmt, params object[] args) {
+      DebugOutputPanel.AddMessage(PluginManager.MessageType.Error, prefix + String.Format(fmt, args));
+    }
+
     public static void Warning(Object s) {
       DebugOutputPanel.AddMessage(PluginManager.MessageType.Warning, prefix + ObjectToString(s));
     }

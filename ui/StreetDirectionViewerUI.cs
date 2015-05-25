@@ -7,24 +7,47 @@ using ColossalFramework.UI;
 using System.Collections;
 using ICities;
 
+
 namespace StreetDirectionViewer {
   class StreetDirectionViewerUI {
 
     private const String BUTTON_NAME = "StreetDirectionViewerButton";
+    private const String SETTINGS_PANEL_NAME = "StreetDirectionViewerOptionsPanel";
 
     private readonly ArrowManager arrowManager;
     public AppMode appMode { get; set; }
     private UIMultiStateButton showStreetDirectionButton;
 
+    private GameObject optionsPanelGameObject;
+    private OptionsPanel optionsPanel;
+
     public StreetDirectionViewerUI(ArrowManager arrowManager) {
       this.arrowManager = arrowManager;
     }
 
-    public void OptionsChanged() {
+    public void OptionsFileChanged() {
       SetButtonPositionAndSize();
+      optionsPanel.UpdateValues(OptionsLoader.CurrentOptions);
     }
 
     public void CreateUI() {
+      
+      // For development, delete any existing panels.
+      var oldSettingsPanels = UIUtils.FindAll<UIPanel>(SETTINGS_PANEL_NAME);
+      if (oldSettingsPanels.Count > 0) {
+        CitiesConsole.Log("destroying " + oldSettingsPanels.Count + " panels");
+        foreach(var p in oldSettingsPanels) {
+          GameObject.Destroy(p);
+        }
+      }
+      
+      this.optionsPanelGameObject = new GameObject(SETTINGS_PANEL_NAME);
+      this.optionsPanel = this.optionsPanelGameObject.AddComponent<OptionsPanel>();
+      this.optionsPanel.eventOptionsApplied += () => {
+        arrowManager.Update();
+        SetButtonPositionAndSize();
+      };
+      optionsPanel.transform.parent = UIView.GetAView().transform;
 
       // Delete the old button if it's there.
       UIButton oldButton = UIUtils.Find<UIButton>(BUTTON_NAME);
@@ -86,7 +109,7 @@ namespace StreetDirectionViewer {
 
       showStreetDirectionButton.playAudioEvents = true;
       showStreetDirectionButton.name = BUTTON_NAME;
-      showStreetDirectionButton.tooltip = "Show Directions of One-Way Roads";
+      showStreetDirectionButton.tooltip = "Show Directions of One-Way Roads. Right-click for options.";
       showStreetDirectionButton.isTooltipLocalized = false;
       showStreetDirectionButton.spritePadding = new RectOffset();
 
@@ -144,8 +167,19 @@ namespace StreetDirectionViewer {
 
       showStreetDirectionButton.eventActiveStateIndexChanged += showStreetDirectionButton_eventActiveStateIndexChanged;
       showStreetDirectionButton.eventVisibilityChanged += showStreetDirectionButton_eventVisibilityChanged;
+      // For some reason, right clicks get eaten with eventClick, but eventMouseUp works.
+      showStreetDirectionButton.eventMouseUp += showStreetDirectionButton_eventMouseUp; 
 
       return true;
+    }
+
+    void showStreetDirectionButton_eventMouseUp(UIComponent component, UIMouseEventParameter eventParam) {
+      if (eventParam.buttons == UIMouseButton.Right) {
+        optionsPanel.absolutePosition = showStreetDirectionButton.absolutePosition - new Vector3(0, optionsPanel.height + 10);
+        optionsPanel.isVisible = !optionsPanel.isVisible;
+        optionsPanel.BringToFront();
+        
+      }
     }
 
     private void SetButtonPositionAndSize() {
