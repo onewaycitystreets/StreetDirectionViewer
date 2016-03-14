@@ -17,6 +17,7 @@ namespace StreetDirectionViewer {
     private readonly ArrowManager arrowManager;
     public AppMode appMode { get; set; }
     private UIMultiStateButton showStreetDirectionButton;
+    private bool showStreetDirectionButtonActive = false;
 
     private GameObject optionsPanelGameObject;
     private OptionsPanel optionsPanel;
@@ -31,7 +32,6 @@ namespace StreetDirectionViewer {
     }
 
     public void CreateUI() {
-      
       // For development, delete any existing panels.
       var oldSettingsPanels = UIUtils.FindAll<UIPanel>(SETTINGS_PANEL_NAME);
       if (oldSettingsPanels.Count > 0) {
@@ -40,7 +40,7 @@ namespace StreetDirectionViewer {
           GameObject.Destroy(p);
         }
       }
-      
+
       this.optionsPanelGameObject = new GameObject(SETTINGS_PANEL_NAME);
       this.optionsPanel = this.optionsPanelGameObject.AddComponent<OptionsPanel>();
       this.optionsPanel.eventOptionsApplied += () => {
@@ -112,6 +112,11 @@ namespace StreetDirectionViewer {
       showStreetDirectionButton.tooltip = "Show Directions of One-Way Roads. Right-click for options.";
       showStreetDirectionButton.isTooltipLocalized = false;
       showStreetDirectionButton.spritePadding = new RectOffset();
+      // The user could activate the arrows through the keyboard shortcut,
+      // so if the arrows are active, turn the button on.
+      if (showStreetDirectionButtonActive) {
+        setShowStreetDirectionButtonState(true);
+      }
 
       // The sprite for the button can't be added to the InGame atlas, since the sprite data
       // seems to come from the atlas's texture, instead of the texture supplied by the SpriteData.
@@ -219,6 +224,13 @@ namespace StreetDirectionViewer {
           arrowManager.DestroyArrows();
         }
       }
+    }
+
+    public void setShowStreetDirectionButtonState(bool active) {
+      if (showStreetDirectionButton != null) {
+        showStreetDirectionButton.activeStateIndex = (active ? 1 : 0);
+      }
+      showStreetDirectionButtonActive = active;
     }
 
     private static UITextureAtlas CreateTextureAtlas(string textureFile, string atlasName, Material baseMaterial, int spriteWidth, int spriteHeight, string[] spriteNames) {

@@ -63,7 +63,7 @@ namespace StreetDirectionViewer {
         String key = keyPrefix + field.Name;
         float x = label.width + 4 + xOffset;
         Type fieldType = field.FieldType;
-        if (fieldType == typeof(Single) || fieldType == typeof(Double)) {
+        if (fieldType == typeof(String) || fieldType == typeof(Single) || fieldType == typeof(Double)) {
           UIComponent component = UIComponents.CreateTextField(this, x, y, 32, 24);
           optionComponents.Add(key, component);
         } else if (fieldType == typeof(Color)) {
@@ -125,7 +125,7 @@ namespace StreetDirectionViewer {
       foreach (FieldInfo field in obj.GetType().GetFields()) {
 
         Type fieldType = field.FieldType;
-        if (fieldType == typeof(Single) || fieldType == typeof(Double)) {
+        if (fieldType == typeof(String) || fieldType == typeof(Single) || fieldType == typeof(Double)) {
           System.Object val = field.GetValue(obj);
           ((UITextField)optionComponents[keyPrefix + field.Name]).text = val.ToString();
         } else if (fieldType == typeof(Color)) {
@@ -171,7 +171,10 @@ namespace StreetDirectionViewer {
       foreach (FieldInfo field in obj.GetType().GetFields()) {
 
         Type fieldType = field.FieldType;
-        if (fieldType == typeof(Single)) {
+        if (fieldType == typeof(String)) {
+          String text = ((UITextField)optionComponents[keyPrefix + field.Name]).text;
+          field.SetValue(obj, text);
+        } else if (fieldType == typeof(Single)) {
           String text = ((UITextField)optionComponents[keyPrefix + field.Name]).text;
           float f;
           try {

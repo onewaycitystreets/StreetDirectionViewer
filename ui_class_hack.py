@@ -21,6 +21,11 @@ new_class_name = 'OptionsPanel%s' % n
 for file_path in file_paths:
   with open(file_path) as f:
     content = f.read()
-  content = re.sub('OptionsPanel\d{10}', new_class_name, content)
+  new_content = re.sub('OptionsPanel\d{10}', new_class_name, content)
   with open(file_path, 'w') as f:
-    f.write(content)
+    f.write(new_content)
+
+if new_content == content:
+  print "OptionsPanel ui hack not applied"
+else:
+  print "OptionsPanel ui reload hack applied, new name: " + new_class_name

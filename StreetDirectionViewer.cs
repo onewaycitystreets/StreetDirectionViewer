@@ -69,6 +69,17 @@ namespace StreetDirectionViewer {
         }
         uiCreated = true;
       }
+
+      if (Input.GetKeyDown(OptionsLoader.CurrentOptions.arrowToggleShortcutKey)) {
+        if (arrowManager.getArrowsActive()) {
+          arrowManager.DestroyArrows();
+          streetDirectionViewerUI.setShowStreetDirectionButtonState(false);
+        } else {
+          arrowManager.CreateArrows();
+          streetDirectionViewerUI.setShowStreetDirectionButtonState(true);
+        }
+      }
+
     }
 
     public override void OnBeforeSimulationTick() {

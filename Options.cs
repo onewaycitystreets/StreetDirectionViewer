@@ -59,6 +59,7 @@ namespace StreetDirectionViewer {
     public Vector2 arrowToggleButtonPositionInEditor = new Vector2(38, 0);
     public Vector2 arrowToggleButtonSizeInGame = new Vector2(36, 36);
     public Vector2 arrowToggleButtonSizeEditor = new Vector2(36, 36);
+    public String arrowToggleShortcutKey = ".";
   }
 
   public static class OptionsLoader {

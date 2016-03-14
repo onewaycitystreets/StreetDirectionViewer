@@ -12,6 +12,8 @@ namespace StreetDirectionViewer {
 
     private readonly List<GameObject> arrowGameObjects = new List<GameObject>();
 
+    private bool arrowsActive;
+
     public bool DestroyArrowsByGameObjectName() {
 
       var meshesToDelete = new List<GameObject>();
@@ -28,6 +30,7 @@ namespace StreetDirectionViewer {
         }
       }
       arrowGameObjects.Clear();
+      arrowsActive = false;
       return meshesToDelete.Count > 0;
     }
 
@@ -36,6 +39,7 @@ namespace StreetDirectionViewer {
         GameObject.Destroy(arrowGameObject);
       }
       arrowGameObjects.Clear();
+      arrowsActive = false;
     }
 
     public void CreateArrows() {
@@ -127,8 +131,12 @@ namespace StreetDirectionViewer {
         }
 
         createArrow(arrow, arrowPosition, direction, arrowMaterial);
-        
       }
+      arrowsActive = true;
+    }
+
+    public bool getArrowsActive() {
+      return arrowsActive;
     }
 
     private static bool IsUnderground(NetNode startNode, NetNode endNode) {
