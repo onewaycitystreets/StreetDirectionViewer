@@ -84,7 +84,7 @@ namespace StreetDirectionViewer {
           continue;
         }
 
-        if (IsAirstripOrHarbor(segment)) {
+        if (IsHarbor(segment)) {
           continue;
         }
 
@@ -181,9 +181,9 @@ namespace StreetDirectionViewer {
       return segment.Info.m_hasBackwardVehicleLanes ^ segment.Info.m_hasForwardVehicleLanes;
     }
 
-    private static bool IsAirstripOrHarbor(NetSegment segment) {
+    private static bool IsHarbor(NetSegment segment) {
       foreach (NetInfo.Lane lane in segment.Info.m_lanes) {
-        if (lane.m_vehicleType.IsFlagSet(VehicleInfo.VehicleType.Plane | VehicleInfo.VehicleType.Ship)) {
+        if (lane.m_vehicleType.IsFlagSet(VehicleInfo.VehicleType.Ship)) {
           return true;
         }
       }

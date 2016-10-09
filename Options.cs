@@ -56,7 +56,7 @@ namespace StreetDirectionViewer {
     public bool hideWithRoadsPanel = true;
 
     public Vector2 arrowToggleButtonPositionInGame = new Vector2(-38, 0);
-    public Vector2 arrowToggleButtonPositionInEditor = new Vector2(38, 0);
+    public Vector2 arrowToggleButtonPositionInEditor = new Vector2(0, 46);
     public Vector2 arrowToggleButtonSizeInGame = new Vector2(36, 36);
     public Vector2 arrowToggleButtonSizeEditor = new Vector2(36, 36);
     public String arrowToggleShortcutKey = ".";
