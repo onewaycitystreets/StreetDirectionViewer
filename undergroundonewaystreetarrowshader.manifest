@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 3499585942
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ca6fc7b3ec418d29f6110ffbceed904b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 80729077cb39806c86b5c10073f074fb
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+Assets:
+- Assets/UndergroundOnewayStreetArrowShader.shader
+Dependencies: []

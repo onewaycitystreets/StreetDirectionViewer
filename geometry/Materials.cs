@@ -1,24 +1,39 @@
-﻿using UnityEngine;
+﻿using ColossalFramework;
+using ColossalFramework.Plugins;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEngine;
 
 namespace StreetDirectionViewer {
   class Materials {
 
-    private const string shader = @"
-Shader ""Arrow Shader"" {
-  Properties { _Color (""Main Color"", Color) = (1,1,1,1) }
-  SubShader {
-    Pass {
-      Lighting On
-      ZTest Always
-      ZWrite Off
-      Material { Diffuse [_Color] Ambient [_Color] }
-      SetTexture [_Dummy] { combine primary double, primary }
+    private static readonly Shader undergroundArrowShader;
+
+    static Materials() {
+
+      foreach (AssetBundle bundle in Resources.FindObjectsOfTypeAll <AssetBundle>()) {
+        if (bundle.name == "undergroundonewaystreetarrowshader") {
+          bundle.Unload(true);
+          CitiesConsole.Log("unloaded bundle");
+          break;
+        }
+      }
+
+      PluginManager.PluginInfo pluginInfo = Singleton<PluginManager>.instance.FindPluginInfo(Assembly.GetAssembly(typeof (Materials)));
+      AssetBundle shaders = AssetBundle.LoadFromFile(pluginInfo.modPath + "\\undergroundonewaystreetarrowshader");
+      if (shaders == null) {
+        CitiesConsole.Log("Could not load underground arrow shaders asset bundle");
+        return;
+      }
+
+      undergroundArrowShader = shaders.LoadAsset<Shader>("UndergroundOnewayStreetArrowShader.shader");
+      if (undergroundArrowShader == null || !undergroundArrowShader.isSupported) {
+        CitiesConsole.Log("Could not load underground arrow shader");
+      }
     }
-  }
-}";
 
     public static Material CreateAlwaysOnTop(Color color) {
-      Material m = new Material(shader);
+      Material m = new Material(undergroundArrowShader == null ?  Shader.Find("Diffuse") : undergroundArrowShader);
       m.color = color;
       return m;
     }
